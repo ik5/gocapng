@@ -1,3 +1,5 @@
+//go:build linux
+
 package gocapng
 
 // UnsetRootID for namespace root id

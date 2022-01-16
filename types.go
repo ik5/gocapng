@@ -18,6 +18,10 @@ type Print int
 // Flags bitmap flags for tailored needs
 type Flags int
 
+// CAPS is type to use for capabilities both POSIX and Linux as a single
+// variable that hold them under
+type CAPS uint
+
 // Type of acts that are supported
 const (
 	// Dtop the capabilities settings
