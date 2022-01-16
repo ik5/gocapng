@@ -37,7 +37,7 @@ func newLibrary(name string, flags int) *dynamicLibrary {
 func (dl *dynamicLibrary) Open() error {
 	handle := C.dlopen(C.CString(dl.Name), C.int(dl.Flags))
 	if handle == C.NULL {
-		return errors.New(C.GoString(C.dlerror()))
+		return errors.New(dl.Error())
 	}
 	dl.handle = handle
 	return nil
@@ -46,7 +46,7 @@ func (dl *dynamicLibrary) Open() error {
 func (dl *dynamicLibrary) Close() error {
 	err := C.dlclose(dl.handle)
 	if err != 0 {
-		return errors.New(C.GoString(C.dlerror()))
+		return errors.New(dl.Error())
 	}
 	return nil
 }
@@ -59,4 +59,8 @@ func (dl *dynamicLibrary) Lookup(symbol string) error {
 		return nil
 	}
 	return errors.New(C.GoString(err))
+}
+
+func (dl *dynamicLibrary) Error() string {
+	return C.GoString(C.dlerror())
 }
