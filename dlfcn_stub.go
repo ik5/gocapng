@@ -12,14 +12,18 @@ func newLibrary(name string, flags int) *dynamicLibrary {
 	return nil
 }
 
-func (dl *dynamicLibrary) Open() error {
+func (dl dynamicLibrary) Open() error {
 	return notSupported
 }
 
-func (dl *dynamicLibrary) Close() error {
+func (dl dynamicLibrary) Close() error {
 	return notSupported
 }
 
-func (dl *dynamicLibrary) Lookup(symbol string) error {
+func (dl dynamicLibrary) Lookup(symbol string) error {
 	return notSupported
+}
+
+func (dl dynamicLibrary) Error() string {
+	return ""
 }
