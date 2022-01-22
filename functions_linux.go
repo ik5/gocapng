@@ -19,11 +19,26 @@ import (
 
 // CapsNG implement the binding of libcap-ng by initialize the .so binding.
 // When done using you must use the Close function.
-type CapsNG struct{}
+type CapNG struct {
+	CapVer    int
+	VFSCapVer int
+	HDR       UserCapData
+	/* TODO continue working on the struct
+	Data
+	int cap_ver;
+	int vfs_cap_ver;
+	struct __user_cap_header_struct hdr;
+	cap_data_t data;
+	capng_states_t state;
+	__le32 rootid;
+	__u32 bounds[VFS_CAP_U32];
+	__u32 ambient[VFS_CAP_U32];
+	*/
+}
 
 // InitFunctions initialize the pointer for all supported functions
-func InitFunctions() (*CapsNG, error) {
-	return &CapsNG{}, nil
+func InitFunctions() (*CapNG, error) {
+	return &CapNG{}, nil
 }
 
 // Clear clears chosen capabilities set
@@ -33,7 +48,7 @@ func InitFunctions() (*CapsNG, error) {
 // for the bounding set, SelectBoth if clearing both is desired, SelectAmbient
 // if only operating on the ambient capabilities, or SelectAll if clearing all
 // is desired.
-func (cp CapsNG) Clear(set Select) {
+func (cp CapNG) Clear(set Select) {
 	C.capng_clear(C.capng_select_t(set))
 }
 
@@ -44,7 +59,7 @@ func (cp CapsNG) Clear(set Select) {
 // the bounding set, SelectBoth if filling both is desired, SelectAmbient if
 // only operating on the ambient capabilities, or SelectAll if clearing all is
 // desired.
-func (cp CapsNG) Fill(set Select) {
+func (cp CapNG) Fill(set Select) {
 	C.capng_fill(C.capng_select_t(set))
 }
 
@@ -52,7 +67,7 @@ func (cp CapsNG) Fill(set Select) {
 //
 // sets the working pid for capabilities operations. This is useful if you want
 // to get the capabilities of a different process.
-func (cp CapsNG) SetPID(pid int) {
+func (cp CapNG) SetPID(pid int) {
 	C.capng_setpid(C.int(pid))
 }
 
@@ -61,7 +76,7 @@ func (cp CapsNG) SetPID(pid int) {
 // GetCapsProcess will get the capabilities and bounding set of the pid stored
 // inside libcap-ng's state table. The default is the pid of the running process.
 // This can be changed by using the capng_setpid function.
-func (cp CapsNG) GetCapsProcess() bool {
+func (cp CapNG) GetCapsProcess() bool {
 	result := C.capng_get_caps_process()
 	return int(result) == 0
 }
@@ -78,7 +93,7 @@ func (cp CapsNG) GetCapsProcess() bool {
 // given in linux/capability.h (translated into Golang by this package).
 //
 // This returns true on success and false on failure.
-func (cp CapsNG) Update(action Act, t Type, capability CAPS) bool {
+func (cp CapNG) Update(action Act, t Type, capability CAPS) bool {
 	result := C.capng_update(
 		C.capng_act_t(action),
 		C.capng_type_t(t),
@@ -103,7 +118,7 @@ func (cp CapsNG) Update(action Act, t Type, capability CAPS) bool {
 // capabilities.
 //
 // This returns true on success and false on failure.
-func (cp CapsNG) Updatev(action Act, t Type, capability ...CAPS) bool {
+func (cp CapNG) Updatev(action Act, t Type, capability ...CAPS) bool {
 	if len(capability) == 0 {
 		return false
 	}
@@ -132,7 +147,7 @@ func (cp CapsNG) Updatev(action Act, t Type, capability ...CAPS) bool {
 // applying all is desired.
 //
 //
-func (cp CapsNG) Apply(set Select) error {
+func (cp CapNG) Apply(set Select) error {
 	var err error
 	result := C.capng_apply(C.capng_select_t(set))
 
@@ -166,7 +181,7 @@ func (cp CapsNG) Apply(set Select) error {
 // the NOROOT_LOCKED option to on for PR_SET_SECUREBITS, set the PR_NO_SETUID_FIXUP
 // option on for PR_SET_SECUREBITS, and set the PR_NO_SETUID_FIXUP_LOCKED option
 // on for PR_SET_SECUREBITS.
-func (cp CapsNG) Lock() bool {
+func (cp CapNG) Lock() bool {
 	result := C.capng_lock()
 	return result == 0
 }
@@ -206,7 +221,7 @@ func (cp CapsNG) Lock() bool {
 //    FlagClearAmbient
 //        Clear ambient capabilities regardless of the internal representation
 //        already setup prior to changing the uid/gid.
-func (cp CapsNG) ChangeID(uid, gid int, flag Flags) error {
+func (cp CapNG) ChangeID(uid, gid int, flag Flags) error {
 	var err error
 
 	result := C.capng_change_id(C.int(uid), C.int(gid), C.capng_flags_t(flag))
@@ -242,7 +257,7 @@ func (cp CapsNG) ChangeID(uid, gid int, flag Flags) error {
 // If the file is in the init namespace or the kernel does not support V3 file
 // system capabilities, it returns UnsetRootID. Otherwise it return an integer
 // for the namespace root id.
-func (cp CapsNG) GetRootID() int {
+func (cp CapNG) GetRootID() int {
 	result := C.capng_get_rootid()
 	return int(result)
 }
@@ -254,7 +269,7 @@ func (cp CapsNG) GetRootID() int {
 // On false there is an internal error or the kernel does not suppor V3
 // filesystem capabilities. On false f there is an internal error or the kernel
 // does not suppor V3 // filesystem capabilities.
-func (cp CapsNG) SetRootID(rootID int) bool {
+func (cp CapNG) SetRootID(rootID int) bool {
 	result := C.capng_set_rootid(C.int(rootID))
 	return result == 0
 }
@@ -267,7 +282,7 @@ func (cp CapsNG) SetRootID(rootID int) bool {
 // function will only work if compiled on a kernel that supports file based
 // capabilities such as 2.6.26 and later. If the "magic" bit is set, then all
 // effect capability bits are set. Otherwise the bits are cleared.
-func (cp CapsNG) GetCapsFD(fd os.File) bool {
+func (cp CapNG) GetCapsFD(fd os.File) bool {
 	intFD := int(fd.Fd())
 	result := C.capng_get_caps_fd(C.int(intFD))
 	return result == 0
@@ -280,7 +295,7 @@ func (cp CapsNG) GetCapsFD(fd os.File) bool {
 // set is not included in file based capabilities operations. Note that this
 // function will only work if compiled on a kernel that supports file based
 // capabilities such as 2.6.2 6 and later.
-func (cp CapsNG) ApplyCapsFD(fd os.File) error {
+func (cp CapNG) ApplyCapsFD(fd os.File) error {
 	intFD := int(fd.Fd())
 	result := C.capng_apply_caps_fd(C.int(intFD))
 
@@ -305,7 +320,7 @@ func (cp CapsNG) ApplyCapsFD(fd os.File) error {
 // When capabilities are checked, it will only look at the effective capabilities.
 //
 // Will not work for a file, use HavePermittedCapabilities instead.
-func (cp CapsNG) HaveCapabilities(set Select) Result {
+func (cp CapNG) HaveCapabilities(set Select) Result {
 	result := C.capng_have_capabilities(C.capng_select_t(set))
 	return Result(result)
 }
@@ -324,7 +339,7 @@ func (cp CapsNG) HaveCapabilities(set Select) Result {
 // check the permitted capabilities. It's for this reason that
 // HavePermittedCapabilities was created. It takes no arguments because it
 // simply checks the permitted set.
-func (cp CapsNG) HavePermittedCapabilities() Result {
+func (cp CapNG) HavePermittedCapabilities() Result {
 	result := C.capng_have_permitted_capabilities()
 	return Result(result)
 }
@@ -336,10 +351,118 @@ func (cp CapsNG) HavePermittedCapabilities() Result {
 // setup with calls to GetCapsProcess, GetCapsFD, or in some other way setup.
 // The values for which should be one of: TypeEffective, TypePermitted,
 // TypeInheritable, TypeBounding_set, or TypeAmbient.
-func (cp CapsNG) HaveCapability(which Type, capability uint) bool {
+func (cp CapNG) HaveCapability(which Type, capability uint) bool {
 	result := C.capng_have_capability(
 		C.capng_type_t(which),
 		C.uint(capability),
 	)
 	return result == 1
+}
+
+// PrintCapsNumeric print numeric values for capabilities set
+//
+// PrintCapsNumeric will create a numeric representation of the internal
+// capabilities. The representation can be sent to either stdout or a buffer by
+// passing PrintStdOut or PrintBuffer respectively for the where parameter.
+//
+// The set parameter controls what is included in the representation. The legal
+// options are SelectCaps for the traditional capabilities, SelectBounds for the
+// bounding set, SelectBoth if printing both is desired, SelectAmbient if only
+// printing the ambient capabilities, or SelectAll if printing all is desired.
+//
+// If PrintBuffer was selected for where, this will be the text buffer and NULL
+// on failure. If PrintStdOut was selected then this value will be NULL no matter
+// what.
+func (cp CapNG) PrintCapsNumberic(where Print, set Select) string {
+	result := C.capng_print_caps_numeric(
+		C.capng_print_t(where),
+		C.capng_select_t(set),
+	)
+
+	if result == nil {
+		return ""
+	}
+
+	str := C.GoString(result)
+
+	if where == PrintBuffer {
+		// Based on man file capng_print_caps_numeric(3):
+		//
+		// If the option was for a buffer, this function will malloc a buffer that
+		// the caller must free.
+		C.free(unsafe.Pointer(result))
+	}
+
+	return str
+}
+
+// PrintCapsText print names of values for capabilities set
+//
+// PrintCapsText will create a text string representation of the internal
+// capability set specified. The representation can be sent to either stdout or
+// a buffer by passing PrintStdOut or PrintBuffer respectively for the where
+// parameter.
+//
+// The legal values for the which parameter is Typeeffective, TypePermitted,
+// TypeInheritable, TypeBoundingSet, or TypeAmbient.
+//
+// If PrintBuffer was selected for where, this will be the text buffer and NULL
+// on failure. If PrintStdOut was selected then this value will be NULL no matter
+// what.
+func (cp CapNG) PrintCapsText(where Print, which Type) string {
+	result := C.capng_print_caps_text(
+		C.capng_print_t(where),
+		C.capng_type_t(which),
+	)
+
+	if result == nil {
+		return ""
+	}
+
+	str := C.GoString(result)
+
+	if where == PrintBuffer {
+		// Based on man file capng_print_caps_numeric(3):
+		//
+		// If the option was for a buffer, this function will malloc a buffer that
+		// the caller must free.
+		C.free(unsafe.Pointer(result))
+	}
+
+	return str
+}
+
+// NameToCapability  convert capability text to integer
+//
+// NameToCapability will take the string being passed and look it up to see what
+// its integer value would be. The string being input is the same name as the
+// define in linux/capabiliy.h with the CAP_ prefix removed. The string case does
+// not matter. The integer that is output is the same as the define would be from
+// linux/capabiliy.h. This is useful for taking string input and converting to
+// something that can be used with Update.
+//
+// This returns a negative number on failure and the correct define otherwise.
+func (cp CapNG) NameToCapability(name string) int {
+	namePtr := C.CString(name)
+	defer C.free(unsafe.Pointer(namePtr))
+
+	result := C.capng_name_to_capability(namePtr)
+	return int(result)
+}
+
+// CapabilityToName convert capability integer to text
+//
+// CapabilityToName will take the integer being passed and look it up to see
+// what its text string representation would be. The integer being input must be
+// in the valid range defined in linux/capabiliy.h. The string that is output is
+// the same as the define text from linux/capabiliy.h with the CAP_ prefix
+// removed and lower case. This is useful for taking integer representation and
+// converting it to something more user friendly for display.
+func (cp CapNG) CapabilityToName(capability uint) string {
+	result := C.capng_capability_to_name(C.uint(capability))
+	if result == nil {
+		return ""
+	}
+	name := C.GoString(result)
+	return name
 }
