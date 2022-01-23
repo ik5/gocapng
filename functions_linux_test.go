@@ -91,3 +91,53 @@ func TestNameToCapabilityNotFound(t *testing.T) {
 		t.Errorf("Expected cap to be 0, but got %d", cap)
 	}
 }
+
+func TestPrintCapsTextEmpty(t *testing.T) {
+	caps := Init()
+	if caps == nil {
+		t.Error("caps is nil")
+	}
+	defer func() {
+		caps = nil
+	}()
+
+	buf := caps.PrintCapsText(
+		PrintBuffer,
+		TypeInheritable,
+	)
+
+	if buf != "" {
+		t.Errorf("Expected buf to be '' but '%s' found", buf)
+	}
+
+	buf = caps.PrintCapsText(
+		PrintStdOut,
+		TypeInheritable,
+	)
+
+	if buf != "" {
+		t.Errorf("buf expected to be empty but '%s' found", buf)
+	}
+}
+
+func TestPrintCapsTextBufValid(t *testing.T) {
+	caps := Init()
+	if caps == nil {
+		t.Error("caps is nil")
+	}
+	defer func() {
+		caps = nil
+	}()
+
+	caps.Clear(SelectAll)
+
+	buf := caps.PrintCapsText(
+		PrintBuffer,
+		TypeInheritable,
+	)
+
+	if buf != "none" {
+		t.Errorf("Expected buf to be 'none' but '%s' found", buf)
+	}
+
+}

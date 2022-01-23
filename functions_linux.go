@@ -387,9 +387,9 @@ func (cp CapNG) PrintCapsNumberic(where Print, set Select) string {
 // The legal values for the which parameter is Typeeffective, TypePermitted,
 // TypeInheritable, TypeBoundingSet, or TypeAmbient.
 //
-// If PrintBuffer was selected for where, this will be the text buffer and NULL
-// on failure. If PrintStdOut was selected then this value will be NULL no matter
-// what.
+// If PrintBuffer was selected for where, this will be the string buffer and
+// empty string on failure. If PrintStdOut was selected then this value will be
+// empty string no matter what.
 func (cp CapNG) PrintCapsText(where Print, which Type) string {
 	result := C.capng_print_caps_text(
 		C.capng_print_t(where),
