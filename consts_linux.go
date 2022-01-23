@@ -4,9 +4,9 @@ package gocapng
 
 // Type of acts that are supported
 const (
-	// Dtop the capabilities settings
+	// Drop the capabilities settings
 	ActDrop Act = iota
-	// ActAdd the capabilities settings
+	// Add the capabilities settings
 	ActAdd
 )
 
