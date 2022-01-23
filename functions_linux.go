@@ -12,7 +12,6 @@ package gocapng
 //}
 import "C"
 import (
-	"errors"
 	"os"
 	"unsafe"
 )
@@ -133,29 +132,28 @@ func (cp CapNG) Updatev(action Act, t Type, capability ...Capability) bool {
 //
 //
 func (cp CapNG) Apply(set Select) error {
-	var err error
 	result := C.capng_apply(C.capng_select_t(set))
 
 	switch result {
 	case -1:
-		err = errors.New("not initialized")
+		return ErrNotInitialized
 	case -2:
-		err = errors.New("SelectBounds and failure to drop a bounding set capability")
+		return ErrSelectBoundsFailureDropBoundingSetCapability
 	case -3:
-		err = errors.New("SelectBounds and failure to re-read bounding set")
+		return ErrSelectBoundsAndFailureToReReadBoundingSet
 	case -4:
-		err = errors.New("SelectBounds and process does not have CAPSetPCap")
+		return ErrSelectBoundsCAPSetPCap
 	case -5:
-		err = errors.New("SelectCaps and failure in capset syscall")
+		return ErrSelectCapsCapsetSyscall
 	case -6:
-		err = errors.New("SelectAmbient and process has no capabilities and failed clearing ambient capabilities")
+		return ErrSelectAmbientAndProcessClearing
 	case -7:
-		err = errors.New("SelectAmbient and process has capabilities and failed clearing ambient capabilities")
+		return ErrSelectAmbientProcessCapabilitiesClearing
 	case -8:
-		err = errors.New("SelectAmbient and process has capabilities and failed setting an ambient capability")
+		return ErrSelectAmbientProcessCapabilitiesSetting
 	}
 
-	return err
+	return nil
 }
 
 // Lock locks the current process capabilities settings
@@ -208,32 +206,30 @@ func (cp CapNG) Lock() bool {
 //        Clear ambient capabilities regardless of the internal representation
 //        already setup prior to changing the uid/gid.
 func (cp CapNG) ChangeID(uid, gid int, flag Flags) error {
-	var err error
-
 	result := C.capng_change_id(C.int(uid), C.int(gid), C.capng_flags_t(flag))
 	switch result {
 	case -1:
-		err = errors.New("means capng has not been initted properly")
+		return ErrCAPNGNotInittedProperly
 	case -2:
-		err = errors.New("means a failure requesting to keep capabilities across the uid change")
+		return ErrFailureRequestingCapabilitiesUidChange
 	case -3:
-		err = errors.New("means that applying the intermediate capabilities failed")
+		return ErrApplyingIntermediateCapabilitiesFailed
 	case -4:
-		err = errors.New("means changing gid failed")
+		return ErrChangingGIDFailed
 	case -5:
-		err = errors.New("means dropping supplemental groups failed")
+		return ErrDroppingSupplementalGroupsFailed
 	case -6:
-		err = errors.New("means changing the uid failed")
+		return ErrChangingUIDFailed
 	case -7:
-		err = errors.New("means dropping the ability to retain caps across a uid change failed")
+		return ErrDroppingAbilityRetainUIDChangeFailed
 	case -8:
-		err = errors.New("means clearing the bounding set failed")
+		return ErrClearingBoundingSet
 	case -9:
-		err = errors.New("means dropping CAP_SETPCAP or ambient capabilities failed")
+		return ErrDroppingCAPSETPCAP
 	case -10:
-		err = errors.New("means initializing supplemental groups failed")
+		return ErrInitializedSupplementalGroups
 	}
-	return err
+	return nil
 }
 
 // GetRootID - get namespace root id
@@ -285,14 +281,13 @@ func (cp CapNG) ApplyCapsFD(fd os.File) error {
 	intFD := int(fd.Fd())
 	result := C.capng_apply_caps_fd(C.int(intFD))
 
-	var err error
 	switch result {
 	case -1:
-		err = errors.New("fd is not a regular file")
+		return ErrFDIsNotRegularFile
 	case -2:
-		err = errors.New("non-root namespace id is being used for rootid")
+		return ErrNonRootNamespaceIDUsedForRootID
 	}
-	return err
+	return nil
 }
 
 // HaveCapabilities check for capabilities
@@ -427,13 +422,17 @@ func (cp CapNG) PrintCapsText(where Print, which Type) string {
 // linux/capabiliy.h. This is useful for taking string input and converting to
 // something that can be used with Update.
 //
-// This returns a negative number on failure and the correct define otherwise.
-func (cp CapNG) NameToCapability(name string) Capability {
+// This returns a Capability and nil error, or an error not found and 0 on
+// capability.
+func (cp CapNG) NameToCapability(name string) (Capability, error) {
 	namePtr := C.CString(name)
 	defer C.free(unsafe.Pointer(namePtr))
 
 	result := C.capng_name_to_capability(namePtr)
-	return Capability(result)
+	if result == -1 {
+		return 0, ErrCapabilityNotFound
+	}
+	return Capability(result), nil
 }
 
 // CapabilityToName convert capability integer to text
