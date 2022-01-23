@@ -26,7 +26,7 @@ type CAPS uint
 type UserCapData struct {
 	Effective   uint32
 	Permitted   uint32
-	inheritable uint32
+	Inheritable uint32
 }
 
 func (a Act) String() string {
