@@ -19,22 +19,7 @@ import (
 
 // CapsNG implement the binding of libcap-ng by initialize the .so binding.
 // When done using you must use the Close function.
-type CapNG struct {
-	CapVer    int
-	VFSCapVer int
-	HDR       UserCapData
-	/* TODO continue working on the struct
-	Data
-	int cap_ver;
-	int vfs_cap_ver;
-	struct __user_cap_header_struct hdr;
-	cap_data_t data;
-	capng_states_t state;
-	__le32 rootid;
-	__u32 bounds[VFS_CAP_U32];
-	__u32 ambient[VFS_CAP_U32];
-	*/
-}
+type CapNG struct{}
 
 // InitFunctions initialize the pointer for all supported functions
 func InitFunctions() (*CapNG, error) {
