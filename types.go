@@ -18,9 +18,9 @@ type Print int
 // Flags bitmap flags for tailored needs
 type Flags int
 
-// CAPS is type to use for capabilities both POSIX and Linux as a single
+// Capability is type to use for capabilities both POSIX and Linux as a single
 // variable that hold them under
-type CAPS uint
+type Capability uint
 
 // UserCapData holds libcap user data
 type UserCapData struct {

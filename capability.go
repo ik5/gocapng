@@ -6,7 +6,7 @@ const (
 		In a system with the [_POSIX_CHOWN_RESTRICTED] option defined, this
 		overrides the restriction of changing file ownership and group ownership.
 	*/
-	CAPCHOWN CAPS = iota
+	CAPCHOWN Capability = iota
 
 	/*
 		Override all DAC access, including ACL execute access if [_POSIX_ACL] is

@@ -78,7 +78,7 @@ func (cp CapNG) GetCapsProcess() bool {
 // given in linux/capability.h (translated into Golang by this package).
 //
 // This returns true on success and false on failure.
-func (cp CapNG) Update(action Act, t Type, capability CAPS) bool {
+func (cp CapNG) Update(action Act, t Type, capability Capability) bool {
 	result := C.capng_update(
 		C.capng_act_t(action),
 		C.capng_type_t(t),
@@ -103,7 +103,7 @@ func (cp CapNG) Update(action Act, t Type, capability CAPS) bool {
 // capabilities.
 //
 // This returns true on success and false on failure.
-func (cp CapNG) Updatev(action Act, t Type, capability ...CAPS) bool {
+func (cp CapNG) Updatev(action Act, t Type, capability ...Capability) bool {
 	if len(capability) == 0 {
 		return false
 	}
