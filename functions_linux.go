@@ -159,6 +159,7 @@ func (cp CapNG) Apply(set Select) error {
 }
 
 // Lock locks the current process capabilities settings
+//
 // lock will take steps to prevent children of the current process to regain
 // full privileges if the uid is 0. This should be called while possessing the
 // CAPSetPCap capability in the kernel. This function will do the following if
@@ -336,7 +337,7 @@ func (cp CapNG) HavePermittedCapabilities() Result {
 // setup with calls to GetCapsProcess, GetCapsFD, or in some other way setup.
 // The values for which should be one of: TypeEffective, TypePermitted,
 // TypeInheritable, TypeBounding_set, or TypeAmbient.
-func (cp CapNG) HaveCapability(which Type, capability uint) bool {
+func (cp CapNG) HaveCapability(which Type, capability Capability) bool {
 	result := C.capng_have_capability(
 		C.capng_type_t(which),
 		C.uint(capability),
@@ -427,12 +428,12 @@ func (cp CapNG) PrintCapsText(where Print, which Type) string {
 // something that can be used with Update.
 //
 // This returns a negative number on failure and the correct define otherwise.
-func (cp CapNG) NameToCapability(name string) int {
+func (cp CapNG) NameToCapability(name string) Capability {
 	namePtr := C.CString(name)
 	defer C.free(unsafe.Pointer(namePtr))
 
 	result := C.capng_name_to_capability(namePtr)
-	return int(result)
+	return Capability(result)
 }
 
 // CapabilityToName convert capability integer to text
@@ -443,7 +444,7 @@ func (cp CapNG) NameToCapability(name string) int {
 // the same as the define text from linux/capabiliy.h with the CAP_ prefix
 // removed and lower case. This is useful for taking integer representation and
 // converting it to something more user friendly for display.
-func (cp CapNG) CapabilityToName(capability uint) string {
+func (cp CapNG) CapabilityToName(capability Capability) string {
 	result := C.capng_capability_to_name(C.uint(capability))
 	if result == nil {
 		return ""
