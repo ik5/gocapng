@@ -17,13 +17,13 @@ import (
 	"unsafe"
 )
 
-// CapsNG implement the binding of libcap-ng by initialize the .so binding.
+// CapNG implement the binding of libcap-ng by initialize the .so binding.
 // When done using you must use the Close function.
 type CapNG struct{}
 
-// InitFunctions initialize the pointer for all supported functions
-func InitFunctions() (*CapNG, error) {
-	return &CapNG{}, nil
+// Init initialize the pointer for all supported functions
+func Init() *CapNG {
+	return &CapNG{}
 }
 
 // Clear clears chosen capabilities set
