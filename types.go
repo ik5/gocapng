@@ -68,7 +68,7 @@ func (s Select) String() string {
 	case SelectAmbient:
 		return "select_ambient"
 	case SelectAll:
-		return "selct_all"
+		return "select_all"
 	default:
 		return ""
 	}
@@ -81,9 +81,9 @@ func (r Result) String() string {
 	case ResultNone:
 		return "none"
 	case ResultPartial:
-		return "partinal"
+		return "partial"
 	case ResultFull:
-		return "fulll"
+		return "full"
 	default:
 		return ""
 	}
