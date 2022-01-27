@@ -11,7 +11,6 @@ func TestInitFunctions(t *testing.T) {
 	if caps == nil {
 		t.Error("caps is nil")
 	}
-	caps = nil
 }
 
 func TestCapabilityToName(t *testing.T) {
