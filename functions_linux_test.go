@@ -91,7 +91,7 @@ func TestNameToCapabilityNotFound(t *testing.T) {
 	}
 }
 
-func TestPrintCapsTextEmpty(t *testing.T) {
+func TestUnInitializedFeatures(t *testing.T) {
 	caps := Init()
 	if caps == nil {
 		t.Error("caps is nil")
@@ -100,26 +100,60 @@ func TestPrintCapsTextEmpty(t *testing.T) {
 		caps = nil
 	}()
 
-	buf := caps.PrintCapsText(
-		PrintBuffer,
-		TypeInheritable,
-	)
+	t.Run("testPrintCapsText", func(t2 *testing.T) {
+		buf := caps.PrintCapsText(
+			PrintBuffer,
+			TypeInheritable,
+		)
 
-	if buf != "" {
-		t.Errorf("Expected buf to be '' but '%s' found", buf)
-	}
+		if buf != "" {
+			t2.Errorf("Expected buf to be '' but '%s' found", buf)
+		}
 
-	buf = caps.PrintCapsText(
-		PrintStdOut,
-		TypeInheritable,
-	)
+		buf = caps.PrintCapsText(
+			PrintStdOut,
+			TypeInheritable,
+		)
 
-	if buf != "" {
-		t.Errorf("buf expected to be empty but '%s' found", buf)
-	}
+		if buf != "" {
+			t2.Errorf("buf expected to be empty but '%s' found", buf)
+		}
+
+	})
+
+	t.Run("testPrintCapsNumberic", func(t2 *testing.T) {
+		buf := caps.PrintCapsNumberic(
+			PrintBuffer,
+			SelectAll,
+		)
+		if buf != "" {
+			t2.Errorf("expected empty buf, but '%s' found", buf)
+		}
+	})
+
+	t.Run("testHaveCapability", func(t2 *testing.T) {
+		result := caps.HaveCapability(TypeInheritable, CAPCHOWN)
+		if result {
+			t2.Error("Expected result to be false, but it is true")
+		}
+	})
+
+	t.Run("testHavePermittedCapabilities", func(t2 *testing.T) {
+		result := caps.HavePermittedCapabilities()
+		if result != ResultNone {
+			t2.Errorf("Expected ResultNone, but %d (%s) found", result, result)
+		}
+	})
+
+	t.Run("testHaveCapabilities", func(t2 *testing.T) {
+		result := caps.HaveCapabilities(SelectAll)
+		if result != ResultPartial {
+			t2.Errorf("Expected ResultPartial, but %d (%s) found", result, result)
+		}
+	})
 }
 
-func TestPrintCapsTextBufValid(t *testing.T) {
+func TestInitializedFeatures(t *testing.T) {
 	caps := Init()
 	if caps == nil {
 		t.Error("caps is nil")
@@ -130,13 +164,61 @@ func TestPrintCapsTextBufValid(t *testing.T) {
 
 	caps.Clear(SelectAll)
 
-	buf := caps.PrintCapsText(
-		PrintBuffer,
-		TypeInheritable,
-	)
+	t.Run("testPrintCapsText", func(t2 *testing.T) {
+		buf := caps.PrintCapsText(
+			PrintBuffer,
+			TypeInheritable,
+		)
 
-	if buf != "none" {
-		t.Errorf("Expected buf to be 'none' but '%s' found", buf)
-	}
+		if buf != "none" {
+			t2.Errorf("Expected buf to be 'none' but '%s' found", buf)
+		}
 
+	})
+
+	t.Run("testPrintCapsNumberic", func(t2 *testing.T) {
+		buf := caps.PrintCapsNumberic(
+			PrintBuffer,
+			SelectAll,
+		)
+
+		expected := `Effective:   00000000, 00000000
+Permitted:   00000000, 00000000
+Inheritable: 00000000, 00000000
+Bounding Set: 00000000, 00000000
+Ambient Set: 00000000, 00000000
+`
+		if expected != buf {
+			t2.Errorf("expected '%s' but found '%s'", expected, buf)
+		}
+
+	})
+	t.Run("testHaveCapability", func(t2 *testing.T) {
+		result := caps.HaveCapability(TypeInheritable, CAPCHOWN)
+		if result {
+			t2.Error("Expected result to be false, but it is true")
+		}
+	})
+
+	t.Run("testHavePermittedCapabilities", func(t2 *testing.T) {
+		result := caps.HavePermittedCapabilities()
+		if result != ResultNone {
+			t2.Errorf("Expected ResultNone, but %d (%s) found", result, result)
+		}
+	})
+
+	t.Run("testHaveCapabilities", func(t2 *testing.T) {
+		result := caps.HaveCapabilities(SelectAll)
+		if result != ResultNone {
+			t2.Errorf("Expected ResultNone, but %d (%s) found", result, result)
+		}
+	})
+
+	t.Run("testFillAndHaveCapabilities", func(t2 *testing.T) {
+		caps.Fill(SelectAll)
+		result := caps.HaveCapabilities(SelectAll)
+		if result != ResultFull {
+			t2.Errorf("Expected ResultFull but have %d (%s)", result, result)
+		}
+	})
 }

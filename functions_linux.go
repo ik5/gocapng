@@ -38,7 +38,7 @@ func (cp CapNG) Clear(set Select) {
 
 // Fill chosen capabilities set
 //
-// Fill sets all bits to a 1 in the selected posix capabilities set. The
+// Fill sets all bits to a 1 in the selected POSIX capabilities set. The
 // options are SelectCaps for the traditional capabilities, SelectBounds for
 // the bounding set, SelectBoth if filling both is desired, SelectAmbient if
 // only operating on the ambient capabilities, or SelectAll if clearing all is
