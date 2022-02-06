@@ -1,7 +1,10 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/signal"
@@ -11,7 +14,7 @@ import (
 )
 
 const (
-	echoPort = "7"
+	echoPort = 7
 )
 
 func handleSignals(quit chan bool) {
@@ -30,16 +33,34 @@ func handleSignals(quit chan bool) {
 	}
 }
 
-func echo() {
+func echoTCP(conn net.Conn) {
+	buf := make([]byte, 4096)
+	for {
+		n, err := conn.Read(buf)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to read content: %s", err)
+			break
+		}
+		if n > 0 {
+			fmt.Fprintf(conn, "%s", buf[:n])
+		}
+	}
 
 }
 
-func listenServer(quit chan bool) {
+func echoUDP(conn net.Conn) {
+
+}
+
+func listenTCPServer(quit chan bool) {
 	fmt.Println("Initializing Echo TCP Server")
-	tcpListen, err := net.Listen("tcp", ":"+echoPort)
+	tcpListen, err := net.Listen("tcp", fmt.Sprintf(":%d", echoPort))
 	if err != nil {
 		quit <- true
-		fmt.Fprintf(os.Stderr, "Unable to bind to on ':%s': %s", echoPort, err)
+		fmt.Fprintf(os.Stderr, "Unable to bind to on ':%d': %s", echoPort, err)
 		return
 	}
 	defer tcpListen.Close()
@@ -55,36 +76,98 @@ func listenServer(quit chan bool) {
 				continue
 			}
 
-			fmt.Fprintf(conn, "%s", conn)
+			go echoTCP(conn)
 		}
 	}
+}
 
+func listenUDPServer(quit chan bool) {
+	fmt.Println("Initializing Echo UDP Server")
+	conn, err := net.ListenUDP("udp", &net.UDPAddr{Port: echoPort})
+	if err != nil {
+		quit <- true
+		fmt.Fprintf(os.Stderr, "Unable to bind to on ':%d': %s", echoPort, err)
+		return
+	}
+	defer conn.Close()
+
+	buf := make([]byte, 4096)
+	for {
+		select {
+		case <-quit:
+			return
+		default:
+			for {
+				n, addr, err := conn.ReadFromUDP(buf[:])
+				if errors.Is(err, io.EOF) {
+					break
+				}
+
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "unable to read UDP: %s", err)
+					break
+				}
+
+				if n > 0 {
+					conn.WriteToUDP(buf[:n], addr)
+				}
+			}
+		}
+	}
 }
 
 func main() {
-	cap := gocapng.Init()        // initialize libcap-ng
-	cap.Clear(gocapng.SelectAll) // clear memory, and set everything to "nothing"
+	listenUDP := flag.Bool("listen-udp", false, "Should the echo server listen to UDP")
+	flag.Parse()
+	cap := gocapng.Init() // initialize libcap-ng
 
-	if !cap.Updatev(
-		gocapng.ActAdd,
-		gocapng.TypeEffective|gocapng.TypePermitted|gocapng.TypeBoundingSet,
-		gocapng.CAPSetPCap,
-		gocapng.CAPNetBindService,
-		// gocapng.CAPSetFCap,
-	) {
-		fmt.Println("Unable to request capability for binding low port number.")
-		os.Exit(-1)
+	if !cap.GetCapsProcess() {
+		fmt.Println("Unable to get process capabilities")
+		os.Exit(1)
 	}
 
-	err := cap.Apply(gocapng.SelectBoth)
+	applyTo := gocapng.TypeInheritable
+	if !cap.Update(
+		gocapng.ActAdd,
+		applyTo,
+		gocapng.CAPSetPCap,
+	) {
+		fmt.Println("Unable to set CAPSetPCap")
+		os.Exit(1)
+	}
+
+	if !cap.Update(
+		gocapng.ActAdd,
+		applyTo,
+		gocapng.CAPSetFCap,
+	) {
+		fmt.Println("Unable to set CAPSetFCap")
+		os.Exit(1)
+	}
+
+	if !cap.Update(
+		gocapng.ActAdd,
+		applyTo,
+		gocapng.CAPNetBindService,
+	) {
+		fmt.Println("Unable to request capability for binding low port number.")
+		os.Exit(1)
+	}
+
+	err := cap.Apply(gocapng.SelectAmbient)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to apply capability: %s\n", err)
-		os.Exit(-2)
+		os.Exit(2)
 	}
 
 	quit := make(chan bool)
 	go handleSignals(quit)
-	go listenServer(quit)
+	if !*listenUDP {
+		go listenTCPServer(quit)
+	}
+	if *listenUDP {
+		go listenUDPServer(quit)
+	}
 
 	<-quit
 }
