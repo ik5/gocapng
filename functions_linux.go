@@ -12,7 +12,6 @@ package gocapng
 //}
 import "C"
 import (
-	"fmt"
 	"os"
 	"unsafe"
 )
@@ -121,7 +120,6 @@ func (cp CapNG) Updatev(action Act, t Type, capability ...Capability) bool {
 		(*C.int)(unsafe.Pointer(&caps[0])),
 	)
 
-	fmt.Println("result", result)
 	return int(result) == 0
 }
 
