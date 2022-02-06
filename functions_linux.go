@@ -7,11 +7,12 @@ package gocapng
 // #include <stdarg.h>
 // #cgo LDFLAGS: -lcap-ng
 //
-// int capng_updatev_wrapper(capng_act_t action, capng_type_t type, unsigned int *capability) {
+// int capng_updatev_wrapper(capng_act_t action, capng_type_t type, int *capability) {
 //	return capng_update(action, type, capability[0]);
 //}
 import "C"
 import (
+	"fmt"
 	"os"
 	"unsafe"
 )
@@ -112,14 +113,15 @@ func (cp CapNG) Updatev(action Act, t Type, capability ...Capability) bool {
 		caps = append(caps, C.int(cap))
 	}
 
-	caps = append(caps, -1)
+	caps = append(caps, C.int(-1))
 
 	result := C.capng_updatev_wrapper(
 		C.capng_act_t(action),
 		C.capng_type_t(t),
-		(*C.uint)(unsafe.Pointer(&caps)),
+		(*C.int)(unsafe.Pointer(&caps[0])),
 	)
 
+	fmt.Println("result", result)
 	return int(result) == 0
 }
 
