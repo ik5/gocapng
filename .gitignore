@@ -1,2 +1,3 @@
 coverage.out
 reference/**
+examples/echo/echo-server
