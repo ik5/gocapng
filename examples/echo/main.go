@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"net"
@@ -16,8 +15,6 @@ import (
 const (
 	echoPort = 7
 )
-
-var cap *gocapng.CapNG
 
 func handleSignals(quit chan bool) {
 	sigs := make(chan os.Signal, 1)
@@ -115,20 +112,20 @@ func listenUDPServer(quit chan bool) {
 }
 
 func main() {
-	listenUDP := flag.Bool("listen-udp", false, "Should the echo server listen to UDP")
-	flag.Parse()
-	cap = gocapng.Init() // initialize libcap-ng
+	cap := gocapng.Init() // initialize libcap-ng
 
+	// try to get the current process capabilities (type of initiation)
 	if !cap.GetCapsProcess() {
 		fmt.Println("Unable to get process capabilities")
 		os.Exit(1)
 	}
 
+	// Any thread and sub process will inherit settings
 	applyTo := gocapng.TypeInheritable
 	if !cap.Update(
 		gocapng.ActAdd,
 		applyTo,
-		gocapng.CAPSetPCap,
+		gocapng.CAPSetPCap, // make sure that we can set capabilities
 	) {
 		fmt.Println("Unable to set CAPSetPCap")
 		os.Exit(1)
@@ -137,7 +134,7 @@ func main() {
 	if !cap.Update(
 		gocapng.ActAdd,
 		applyTo,
-		gocapng.CAPSetFCap,
+		gocapng.CAPSetFCap, // make sure we can set file capabilities
 	) {
 		fmt.Println("Unable to set CAPSetFCap")
 		os.Exit(1)
@@ -146,13 +143,22 @@ func main() {
 	if !cap.Update(
 		gocapng.ActAdd,
 		applyTo,
-		gocapng.CAPNetBindService,
+		gocapng.CAPNetBindService, // allow us to bind < 1024 port number in TCP
 	) {
 		fmt.Println("Unable to request capability for binding low port number.")
 		os.Exit(1)
 	}
 
-	err := cap.Apply(gocapng.SelectAmbient)
+	if !cap.Update(
+		gocapng.ActAdd,
+		applyTo,
+		gocapng.CAPNetRaw, // allow us to bind < 1024 port number in UDP
+	) {
+		fmt.Println("Unable to request capability for binding low port number.")
+		os.Exit(1)
+	}
+
+	err := cap.Apply(gocapng.SelectAmbient) // apply the given request.
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to apply capability: %s\n", err)
 		os.Exit(2)
@@ -160,12 +166,8 @@ func main() {
 
 	quit := make(chan bool)
 	go handleSignals(quit)
-	if !*listenUDP {
-		go listenTCPServer(quit)
-	}
-	if *listenUDP {
-		go listenUDPServer(quit)
-	}
+	go listenTCPServer(quit)
+	go listenUDPServer(quit)
 
 	<-quit
 }
