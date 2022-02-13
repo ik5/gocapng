@@ -24,4 +24,18 @@ The difference between libcap and libcap-ng is that libcap-ng is a library that
 provides helps for taking care of POSIX libcap in simpler manner.
 
 
+Building Requirements
+---------------------
+
+Every executable binary that requires to have capabilities attributes enabled.
+
+The way to set capabilities is to use `setcap` command that arrive from `libcap`.
+
+```shell
+$ sudo setcap CAP_ .... <executable>
+```
+
+Without using `setcap`, the executable will not gain any required permission.
+
+
 
