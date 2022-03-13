@@ -10,6 +10,11 @@ __static__ linking.
 The aim of the binding is to provide a Go'ish approach on using libcap-ng's API.
 The code is only for Linux without a support for any additional OSes.
 
+The API itself allows to provide to 3rd party execution rights.
+
+The examples directory provides both the usage, and the actual right
+attributes provided for the executable.
+
 What is it all about
 --------------------
 
